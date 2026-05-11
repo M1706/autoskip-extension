@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoSkip</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #1e1e2e;
+      --accent: #22c55e;
+      --accent-dim: #16a34a;
+      --danger: #ef4444;
+      --text: #f0f0f5;
+      --muted: #6b7280;
+    }
+
+    body {
+      width: 280px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo svg {
+      width: 18px;
+      height: 18px;
+      fill: #000;
+    }
+
+    .title-block {
+      flex: 1;
+    }
+
+    .title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .subtitle {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Toggle row */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .toggle-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-label span:first-child {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #status-text {
+      font-size: 10px;
+      color: var(--accent);
+      transition: color 0.2s;
+    }
+
+    #status-text.off {
+      color: var(--danger);
+    }
+
+    /* Toggle switch */
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input { display: none; }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #2a2a3a;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: transform 0.25s, background 0.25s;
+    }
+
+    input:checked + .slider {
+      background: rgba(34, 197, 94, 0.2);
+    }
+
+    input:checked + .slider::before {
+      transform: translateX(20px);
+      background: var(--accent);
+    }
+
+    /* Stats card */
+    .stats-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      width: 38px;
+      height: 38px;
+      background: rgba(34,197,94,0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    #skip-count {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 26px;
+      color: var(--accent);
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+
+    #skip-count.bump {
+      transform: scale(1.15);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .reset-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Site list */
+    .sites-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .sites-heading {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .site-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .site-tag {
+      font-size: 10px;
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      color: var(--accent);
+      border-radius: 5px;
+      padding: 3px 7px;
+      letter-spacing: 0.3px;
+    }
+
+    .footer {
+      padding: 10px 20px 14px;
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.4px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pulse {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+      animation: pulse 1.8s infinite;
+    }
+
+    .pulse.off {
+      background: var(--danger);
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 4l10 8-10 8V4zm11 0h3v16h-3z"/>
+      </svg>
+    </div>
+    <div class="title-block">
+      <div class="title">AutoSkip</div>
+      <div class="subtitle">Ad skipper — all sites</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <span>Auto-skip</span>
+        <span id="status-text">● Active</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="stats-card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div class="stat-info">
+        <div id="skip-count">0</div>
+        <div class="stat-label">Ads skipped</div>
+      </div>
+      <button class="reset-btn" id="reset-btn">Reset</button>
+    </div>
+
+    <div class="sites-section">
+      <div class="sites-heading">Works on</div>
+      <div class="site-list">
+        <span class="site-tag">YouTube</span>
+        <span class="site-tag">Hotstar</span>
+        <span class="site-tag">Tubi</span>
+        <span class="site-tag">Peacock</span>
+        <span class="site-tag">Pluto TV</span>
+        <span class="site-tag">+ more</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span class="pulse" id="pulse-dot"></span>
+    Watching for skip buttons
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
